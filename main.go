@@ -15,11 +15,11 @@ func main() {
 	l := log.New(os.Stdout, "product-service", log.LstdFlags)
 
 	// create the handlers
-	hh := handlers.NewHello(l)
+	ph := handlers.NewProducts(l)
 
 	// create a new server mux and register the handlers
 	sm := http.NewServeMux()
-	sm.Handle("/", hh)
+	sm.Handle("/", ph)
 
 	// create a new server
 	s := &http.Server{
@@ -30,13 +30,19 @@ func main() {
 		WriteTimeout: 10 * time.Second,  // max time to write request to the client
 		IdleTimeout:  120 * time.Second, // max time for connections using TCP keep-alive
 	}
+
+	// start the server
 	go func() {
+		l.Println("Starting server on port 9090")
+
 		err := s.ListenAndServe()
 		if err != nil {
-			log.Fatal(err)
+			l.Printf("Error starting server: %s\n", err)
+			os.Exit(1)
 		}
 	}()
 
+	// trap sigterm or interrupt and gracefully shutdown the server
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, os.Kill)
