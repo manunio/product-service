@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -76,7 +77,16 @@ func (p Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 		product := data.Product{}
 		err := product.FromJSON(r.Body)
 		if err != nil {
+			p.l.Println("[Error] deserializing product", err)
 			http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)
+			return
+		}
+
+		// validate product
+		err = product.Validate()
+		if err != nil {
+			p.l.Println("[Error] validating product", err)
+			http.Error(rw, fmt.Sprintf("Error validating product: %s", err), http.StatusBadRequest)
 			return
 		}
 
